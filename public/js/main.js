@@ -1,30 +1,40 @@
 import handlers from "/js/handlers.js";
 
+const $form = document.getElementById("form");
+const $progress = document.getElementById("progress");
+const $progress_bar = document.getElementById("progress_bar");
 const $player = document.getElementById("player");
-const $input_file = document.getElementById("input_file");
-const $downloadButton = document.getElementById("download");
-const $progress = document.getElementById("progress").childNodes[0];
+const $download = document.getElementById("download");
+const $output = document.getElementById("output");
 
 const onProgress = (ratio) => {
-  $progress.data = `${Math.round(ratio * 1000) / 10}%`;
+  $progress_bar.style.width = `${ratio * 100}%`;
 };
 
-(async () => {
-  $input_file.addEventListener("change", async (event) => {
-    const file = event.currentTarget.files[0];
-    const handler = handlers.find((i) => i.accept(file));
-    if (handler === undefined) {
-      alert("invalid file");
-      return;
-    }
+$form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  $progress_bar.style.removeProperty("width");
+  $output.classList.add("d-none");
+  const data = new FormData(event.currentTarget);
+  const file = data.get("input_file");
+  const timeOffset = Date.parse(data.get("time_offset"));
+  if (isNaN(timeOffset)) {
+    alert("invalid time offset");
+    return;
+  }
+  const handler = handlers.find((i) => i.accept(file));
+  if (handler === undefined) {
+    alert("invalid file");
+    return;
+  }
 
-    const newFile = await handler.process(file, { onProgress });
-    const videoURL = URL.createObjectURL(newFile);
-    $downloadButton.href = videoURL;
-    $downloadButton.download = newFile.name;
-    $player.src = videoURL;
-    $player.loop = true;
-    $player.play();
-  });
-})();
-
+  $progress.classList.remove("d-none");
+  const newFile = await handler.process(file, { timeOffset, onProgress });
+  $progress.classList.add("d-none");
+  const videoURL = URL.createObjectURL(newFile);
+  $download.href = videoURL;
+  $download.download = newFile.name;
+  $player.src = videoURL;
+  $output.classList.remove("d-none");
+  $player.play();
+});

@@ -7,7 +7,7 @@ class VideoHandler {
     return file.type.startsWith("video/");
   }
 
-  async process(file, { onProgress }) {
+  async process(file, { timeOffset, onProgress }) {
     const ffmpeg = FFmpeg.createFFmpeg({
       log: true,
       corePath: "/js/vendor/ffmpeg-core.js",
